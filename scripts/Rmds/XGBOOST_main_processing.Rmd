@@ -7,7 +7,7 @@ knit: (function(inputFile, encoding) {
   rmarkdown::render(inputFile, encoding = encoding, output_dir = here::here("output/"))})
 ---
 
-```{r setup, echo=TRUE, results='hide', message=FALSE, warning=FALSE}
+```{r setup, echo=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
@@ -15,7 +15,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Can be examined on data_load_and_preprocess.Rmd/html auxillary notebook, here it is only loaded:
 
-```{r, results='hide'}
+```{r, echo=TRUE, results='hide', message=FALSE, warning=FALSE}
 source(here::here("scripts","Rmds","data_load_and_preprocess.R"))
 ```
 
@@ -35,12 +35,12 @@ traindata-ynum integer (0,1,2) corresponds to the levels (LUAD,LUSC,NORM) of tra
 traindata$ynum=as.integer(traindata$y) - 1
 traindata$x=t(traindata$x[selected_genes$sgenes_indexTh,])
 traindata$x=cbind(traindata$x,traindata$covariates$`Alignment Quality Index`) #add AQI to index
-colnames(traindata$x)[ncol(traindata$x)] <- 'Sequencing Quality Index'
+colnames(traindata$x)[ncol(traindata$x)] <- 'Alignment Quality Index'
 
 testdata$ynum=as.integer(testdata$y) - 1
 testdata$x=t(testdata$x[selected_genes$sgenes_indexTh,])
 testdata$x=cbind(testdata$x,testdata$covariates$`Alignment Quality Index`) #add AQI to index
-colnames(testdata$x)[ncol(testdata$x)] <- 'Sequencing Quality Index'
+colnames(testdata$x)[ncol(testdata$x)] <- 'Alignment Quality Index'
 
 numclass=length(unique(traindata$ynum)) #needed by XGBoost input
 ```
