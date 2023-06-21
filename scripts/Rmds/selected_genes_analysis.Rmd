@@ -1,0 +1,43 @@
+---
+title: "Analysis of the smallest set of selected genes"
+output:
+  html_document:
+    self_contained: false
+knit: (function(inputFile, encoding) {
+  rmarkdown::render(inputFile, encoding = encoding, output_dir = here::here("output/"))})
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(here)
+```
+
+
+```{r}
+features=read.csv(here("data/lung_tpm.csv"), row.names=1)
+covariates=read.csv(here("data/lung_cov.csv"), row.names=1)
+genesinfo=read.csv(here("data/genes_info.csv"), row.names=1)
+selected_genes=read.csv(here("output/selected_genes.csv"))
+feature_importance_xgb=read.csv(here("output/feature_importance_xgb.csv"), row.names=2)
+```
+
+```{r}
+
+#compute AQI
+covariates$`Alignment Quality Index`=0.5 *covariates$N_unmapped_prop + 0.167 *covariates$N_multimapping_prop + 0.167 * covariates$N_noFeature_prop + 0.167 * covariates$N_ambiguous_prop
+
+#subset to protein genes
+protein_genes <- which(genesinfo$gene_type == "protein_coding")
+features=features[protein_genes,]
+
+#subset to features used in XGBclassification
+features_selected=features[selected_genes$sgenes_indexTh,]
+
+
+feature_selected=rbind 
+
+#compute AQI
+covariates$`Alignment Quality Index`=0.5 *covariates$N_unmapped_prop + 0.167 *covariates$N_multimapping_prop + 0.167 * covariates$N_noFeature_prop + 0.167 * covariates$N_ambiguous_prop
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
