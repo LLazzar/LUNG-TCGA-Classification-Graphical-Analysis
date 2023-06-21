@@ -22,6 +22,8 @@ feature_importance_xgb=read.csv(here("output/feature_importance_xgb.csv"), row.n
 ```
 
 ```{r}
+#labels
+labels=factor(covariates[,2]) #factor labels all together at beginning
 
 #compute AQI
 covariates$`Alignment Quality Index`=0.5 *covariates$N_unmapped_prop + 0.167 *covariates$N_multimapping_prop + 0.167 * covariates$N_noFeature_prop + 0.167 * covariates$N_ambiguous_prop
@@ -31,13 +33,68 @@ protein_genes <- which(genesinfo$gene_type == "protein_coding")
 features=features[protein_genes,]
 
 #subset to features used in XGBclassification
-features_selected=features[selected_genes$sgenes_indexTh,]
-
-
-feature_selected=rbind 
-
-#compute AQI
-covariates$`Alignment Quality Index`=0.5 *covariates$N_unmapped_prop + 0.167 *covariates$N_multimapping_prop + 0.167 * covariates$N_noFeature_prop + 0.167 * covariates$N_ambiguous_prop
+features_selected=as.data.frame(t(features[selected_genes$sgenes_indexTh,]))
+features_selected$`Alignment Quality Index`= covariates$`Alignment Quality Index`
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r, dev='svg'}
+# Load the necessary library
+library(pheatmap)
+
+#Standardize
+features_selected_sd=scale(features_selected)
+
+#Transpose your gene matrix so that genes are rows and observations are columns
+transposed_matrix <- t(features_selected_sd)
+
+#ranamed genes with name 
+proteingenesinfo=genesinfo[protein_genes,]
+selectedgenesinfo=proteingenesinfo[selected_genes$sgenes_indexTh,]
+rownames(transposed_matrix) <- c(selectedgenesinfo$gene_name, "Alignment Quality Index")
+
+#add xgb importance near name
+new_row_names <- character(nrow(transposed_matrix))
+for (i in 1:nrow(transposed_matrix)) {
+  original_name <- rownames(transposed_matrix)[i]
+  importance_score <- feature_importance_xgb$values[i]
+  new_row_names[i] <- paste0(original_name, " (", sprintf("%.2f", importance_score), ")")
+}
+rownames(transposed_matrix) <- new_row_names
+
+# Get the indices for ordering by importance
+importance_order <- order(feature_importance_xgb, decreasing = TRUE)
+
+# Order rows by importance
+ordered_matrix <- transposed_matrix[importance_order, ]
+
+#Get indexes for odering by labels
+label_order <- order(factor(labels, levels = c("LUAD", "LUSC", "NORM")))
+
+# Order columns by label
+ordered_matrix <- ordered_matrix[, label_order]
+ordered_labels <- labels[label_order]
+
+# Create a dataframe for annotations
+annotation_df <- data.frame(True.classes = ordered_labels)
+rownames(annotation_df) <- colnames(ordered_matrix)
+annotation_colors = list(True.classes = c(LUAD = "red", LUSC = "green", NORM = "blue"))
+
+#To handle outliers (in AQI) and make visualization better
+breaks = c(seq(-5, 5, length.out = 49), max(ordered_matrix))
+
+# Create the heatmap
+pheatmap(
+  mat = ordered_matrix, 
+  annotation_col = annotation_df,
+  annotation_colors = annotation_colors,
+  show_rownames = TRUE,
+  show_colnames = FALSE,
+  cluster_rows = FALSE,
+  cluster_cols = FALSE,
+  scale = "none",
+  color = colorRampPalette(c("white", "black"))(50),
+  breaks=breaks,
+  legend=FALSE
+)
+
+```
