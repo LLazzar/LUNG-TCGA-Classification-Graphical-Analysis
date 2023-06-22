@@ -37,7 +37,7 @@ features_selected=as.data.frame(t(features[selected_genes$sgenes_indexTh,]))
 features_selected$`Alignment Quality Index`= covariates$`Alignment Quality Index`
 ```
 
-```{r, dev='svg'}
+```{r, dev='svg', fig.height=4}
 # Load the necessary library
 library(pheatmap)
 

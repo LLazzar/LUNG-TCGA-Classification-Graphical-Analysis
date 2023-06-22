@@ -1,0 +1,3 @@
+silplot, exported at 340x340 adjusted in Inkscape at W=70
+classmpa export mfrow(1,3) at 300x750 adjusted at H:142
+Mdscolorscale print pdf ->> covert to svvg online ---> adjusted at 57.5

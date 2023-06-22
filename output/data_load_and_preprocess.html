@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Lorenzo Lazzari" />
+
+<meta name="date" content="2023-06-20" />
+
+<title>Data Load and Preprocessing</title>
+
+<script src="data_load_and_preprocess_files/header-attrs-2.22/header-attrs.js"></script>
+<script src="data_load_and_preprocess_files/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="data_load_and_preprocess_files/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
+<script src="data_load_and_preprocess_files/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="data_load_and_preprocess_files/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="data_load_and_preprocess_files/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="data_load_and_preprocess_files/navigation-1.1/tabsets.js"></script>
+<link href="data_load_and_preprocess_files/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="data_load_and_preprocess_files/highlightjs-9.12.0/highlight.js"></script>
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+details > summary > p:only-child {
+  display: inline;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "\e259";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "\e258";
+  font-family: 'Glyphicons Halflings';
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+
+
+<div id="header">
+
+
+
+<h1 class="title toc-ignore">Data Load and Preprocessing</h1>
+<h4 class="author">Lorenzo Lazzari</h4>
+<h4 class="date">2023-06-20</h4>
+
+</div>
+
+
+<div id="load-data" class="section level2">
+<h2>Load Data</h2>
+<pre class="r"><code>library(here)</code></pre>
+<pre><code>## here() starts at C:/Users/Admin/OneDrive - Alma Mater Studiorum Università di Bologna/Thesis/LUNG-TCGA-Classifications-Graphical-Analysis</code></pre>
+<pre class="r"><code>features=read.csv(here(&quot;data/lung_tpm.csv&quot;), row.names=1)
+covariates=read.csv(here(&quot;data/lung_cov.csv&quot;), row.names=1)
+pancan_covariates=read.csv(here(&quot;data/lung_pancan_cov.csv&quot;), row.names = 1)
+genesinfo=read.csv(here(&quot;data/genes_info.csv&quot;), row.names=1)</code></pre>
+</div>
+<div id="format" class="section level2">
+<h2>Format</h2>
+<p>Get Labels, Protein Coding Genes and compute Aligment Quality
+Index</p>
+<pre class="r"><code>#labels
+labels=factor(covariates[,2]) #factor labels all together at beginning
+
+#getting protein coding genes only 
+protein_genes &lt;- which(genesinfo$gene_type == &quot;protein_coding&quot;)
+
+#compute AQI
+covariates$`Alignment Quality Index`=0.5 *covariates$N_unmapped_prop + 0.167 * covariates$N_multimapping_prop + 0.167 * covariates$N_noFeature_prop + 0.167 * covariates$N_ambiguous_prop</code></pre>
+</div>
+<div id="traintest-split" class="section level2">
+<h2>Train/Test split</h2>
+<p>Producing indexes for train and test</p>
+<pre class="r"><code>#train/test split
+set.seed(33)
+train_index &lt;- sample(length(labels), length(labels) * 0.8)
+
+train_prop &lt;- table(labels[train_index]) / length(labels[train_index])
+test_prop &lt;- table(labels[-train_index]) / length(labels[-train_index])
+
+# create a 1-row 2-column layout for the two pie charts
+par(mfrow=c(1,2), mar = c(1,1,1,5))
+
+# Create labels with both names and percentages
+train_labels &lt;- paste(names(train_prop), sprintf(&quot; (%.1f%%)&quot;, train_prop*100))
+test_labels &lt;- paste(names(test_prop), sprintf(&quot; (%.1f%%)&quot;, test_prop*100))
+
+# Create pie charts
+pie(train_prop, main = &quot;Train Labels Proportions&quot;, labels = train_labels, 
+    col =c(&quot;red&quot;,&quot;green&quot;,&quot;blue&quot;))
+pie(test_prop, main = &quot;Test Labels Proportions&quot;, labels = test_labels,
+    col =c(&quot;red&quot;,&quot;green&quot;,&quot;blue&quot;))</code></pre>
+<p><img src="data_load_and_preprocess_files/figure-html/unnamed-chunk-3-1.png" width="768" /></p>
+<pre class="r"><code>rm(train_labels,test_labels,train_prop,test_prop)</code></pre>
+</div>
+<div id="reformat" class="section level2">
+<h2>Reformat</h2>
+<p>Organizing data in the format PAMR algorithms wants that is:</p>
+<p>“A list with components: x- an expression genes in the rows, samples
+in the columns), and y- a vector of the class labels for each sample.
+Optional components- genenames, a vector of gene names, and geneid- a
+vector of gene identifiers.” (from ?pamr.train)</p>
+<pre class="r"><code>traindata=list()
+traindata$y=labels[train_index]
+traindata$x=as.matrix(features[protein_genes,train_index])
+traindata$geneid=genesinfo$gene_id[protein_genes]
+traindata$genenames=genesinfo$gene_name[protein_genes]
+traindata$covariates=covariates[train_index,]
+traindata$pancovariates=covariates[train_index,]
+
+
+testdata=list()
+testdata$y=labels[-train_index]
+testdata$x=as.matrix(features[protein_genes,-train_index])
+testdata$geneid=genesinfo$gene_id[protein_genes]
+testdata$genenames=genesinfo$gene_name[protein_genes]
+testdata$covariates=covariates[-train_index,]
+testdata$pancovariates=covariates[-train_index,]
+
+#empty initial reads
+rm(features,covariates,pancan_covariates,genesinfo) </code></pre>
+<pre class="r"><code>print(paste0(&quot;Nr. training obvs: &quot;, length(traindata$y)))</code></pre>
+<pre><code>## [1] &quot;Nr. training obvs: 922&quot;</code></pre>
+<pre class="r"><code>print(paste0(&quot;Nr. test obvs: &quot;, length(testdata$y)))</code></pre>
+<pre><code>## [1] &quot;Nr. test obvs: 231&quot;</code></pre>
+</div>
+<div id="accessory-data-transformation" class="section level2">
+<h2>Accessory data transformation</h2>
+<p>Eventual data transformation to bring data towards
+normality/stabilising variance:</p>
+<pre class="r"><code>#leave to all false ---&gt; no transformation
+#or select TRUE (at most one) ----&gt; perform selected transformation
+
+log2transf=FALSE
+log10transf=FALSE
+deseqVST=FALSE
+
+if (log2transf) {
+  traindata$x=log2(1+traindata$x) #add +1 to avoid Inf 
+  testdata$x=log2(1+testdata$x)
+}
+
+if (log10transf) {
+  traindata$x=log10(1+traindata$x)
+  testdata$x=log10(1+testdata$x)
+}
+
+if (deseqVST) {
+  dds_train = DESeq2::DESeqDataSetFromMatrix(countData=traindata$x, 
+               colData=data.frame(condition=rep(1,ncol(traindata$x))),design = ~ 1)
+  vst_train = vst(dds_train, blind=TRUE)
+  traindata$x = as.matrix(assay(vst_train))
+  
+  #code to be revised!
+  vst_test = vst(dds_train, blind=TRUE)
+  testdata$x = as.matrix(assay(vst_test))
+}</code></pre>
+</div>
+
+
+
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

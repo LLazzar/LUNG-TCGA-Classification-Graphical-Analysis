@@ -1,0 +1,4 @@
+outliers in pamr
+boundaries problem with clas one in pamr not in xgboost
+discuss different view of the structure
+still the two outliers in class luad seen in mds colorscale in pamr and confirmed in classmap of xgboost, look this two outlier if there ar ecommon in some covariates
