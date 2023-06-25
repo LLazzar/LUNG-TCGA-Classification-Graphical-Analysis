@@ -77,6 +77,12 @@ sgenes_index=data.frame(sgenes_indexTo,sgenes_indexTh)
 write.csv(sgenes_index, here::here("output/selected_genes.csv"), row.names = FALSE)
 ```
 
+Saving also sd estimated for each gene by the algorithm (pooling them):
+
+```{r}
+write.csv(as.data.frame(pamr$sd), here::here("output/pamr_estimated_sd.csv"), row.names = TRUE)
+```
+
 </details>
 
 

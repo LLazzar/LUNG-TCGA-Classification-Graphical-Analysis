@@ -105,9 +105,9 @@ vcrtest=vcr.custom.newdata(testdata$y, probs=testdata$posteriors, vcr.custom.tra
 #' 	
 #' 	
 confusionMatrix(factor(traindata$ypred), traindata$y) #can also put vcrtrain$ypred	
-silplot(vcrtrain)	
+silplot(vcrtrain, main="")	
 confusionMatrix(factor(testdata$ypred), testdata$y)	
-silplot(vcrtest)	
+silplot(vcrtest, main="")	
 #' 	
 #' 	
 #' Qresplots (only produced for continuos covariates in traning set):	

@@ -151,7 +151,7 @@ mdscolorscale(vcrtrainTh, diss=vcrtrainTh$pwd, main=
 #' 	
 #' 	
 	
-par(mfrow=c(3,3))	
+par(mfrow=c(2,3))	
 	
 qresplot(vcrtrainTh$PAC,traindata$pancovariates$MSI.MANTIS.Score, plotErrorBars = TRUE, 	
          main="Mantis Score", xlim=c(0.2,0.4))	

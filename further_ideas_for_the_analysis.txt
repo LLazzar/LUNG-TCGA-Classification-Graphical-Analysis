@@ -1,0 +1,2 @@
+Add noise to XGboost model on test set, to generate noise take as reference variance around mean of gene considering true class
+Binary Classification in BRCA and try to see if PAM50 subtyping is seen by classifiers
