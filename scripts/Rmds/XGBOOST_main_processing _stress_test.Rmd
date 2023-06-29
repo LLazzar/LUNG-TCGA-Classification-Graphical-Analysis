@@ -77,6 +77,62 @@ library(classmap) #the classmap package
 library(classmapExt) #the extension package with supplementary functions
 ```
 
+### Add errors to test set
+
+Estimate variance inside each class in train (to get the proxy for variablility)
+
+```{r}
+sd=read.csv(here("output/pamr_estimated_sd.csv"), row.names = 1)
+sd=sd[selected_genes$sgenes_indexTh,,drop=FALSE] #subset the 14 genes
+```
+
+```{r}
+
+classes=levels(testdata$y)
+
+#average deviation from genes (like a sum and then divided) #it's s trange quantity it's deviation from truth for each genes summed upp
+testdata$mean.noise.deviation=rep(0, length(testdata$y))
+
+testdata$x.noise=matrix(data=NA, nrow=nrow(testdata$x), ncol=ncol(testdata$x))
+
+for (class in classes) {
+  class.index=which(testdata$y==class)
+  for (i in class.index){ #select the index of obervation within that class
+    for (gene in 1:(ncol(testdata$x)-1)) {
+      if (traindata$weight[gene]>0.10) { #add error only for important genes
+        error=rnorm(1,0,2*sd[gene,])
+      } 
+      else {
+        error=0
+      }
+      
+      if (testdata$x[i,gene]>abs(error)) { #avoid negative values not possible!
+      testdata$x.noise[i,gene]=testdata$x[i,gene]+error
+      }
+      else {
+        testdata$x.noise[i,gene]=abs(rnorm(1,0,0.1))*testdata$x[i,gene]
+        error=testdata$x[i,gene]-testdata$x.noise[i,gene] #genes goes to 0
+      }
+      
+      testdata$mean.noise.deviation[i]=testdata$mean.noise.deviation[i]+abs(error)
+    }
+  }
+}
+
+#add AQI index untouched
+testdata$x.noise[,15]=testdata$x[,15]
+
+#add names to col and rows
+colnames(testdata$x.noise) <- colnames(testdata$x)
+rownames(testdata$x.noise) <- rownames(testdata$x)
+
+hist(testdata$mean.noise.deviation)
+
+```
+
+
+
+
 ### Silplot and Quasi-residual plots
 
 No particular computations needed, just compute and feed the posteriors.
@@ -91,6 +147,10 @@ traindata$ypred = apply(traindata$posteriors,1,function(x) colnames(traindata$po
 testdata$posteriors = predict(xgb_model,testdata$x,reshape=T)
 colnames(testdata$posteriors) = levels(traindata$y)
 testdata$ypred = apply(testdata$posteriors,1,function(x) colnames(testdata$posteriors)[which.max(x)])
+
+testdata$posteriors.noise = predict(xgb_model,testdata$x.noise,reshape=T)
+colnames(testdata$posteriors.noise) = levels(traindata$y)
+testdata$ypred.noise = apply(testdata$posteriors.noise,1,function(x) colnames(testdata$posteriors.noise)[which.max(x)])
 ```
 
 Using the flexible function to just produce PAC and Sil values
@@ -99,6 +159,8 @@ Using the flexible function to just produce PAC and Sil values
 #feeding only true labels and posteriors
 vcrtrain=vcr.custom.train(traindata$y, probs=traindata$posteriors) 
 vcrtest=vcr.custom.newdata(testdata$y, probs=testdata$posteriors, vcr.custom.train.out=vcrtrain)
+vcrtest.noise=vcr.custom.newdata(testdata$y, probs=testdata$posteriors.noise,
+                                 vcr.custom.train.out=vcrtrain)
 ```
 
 Silplots:
@@ -108,6 +170,8 @@ confusionMatrix(factor(traindata$ypred), traindata$y) #can also put vcrtrain$ypr
 silplot(vcrtrain)
 confusionMatrix(factor(testdata$ypred), testdata$y)
 silplot(vcrtest)
+confusionMatrix(factor(testdata$ypred.noise), testdata$y)
+silplot(vcrtest.noise)
 ```
 
 Qresplots (only produced for continuos covariates in traning set):
@@ -130,6 +194,27 @@ qresplot(vcrtrain$PAC,traindata$covariates$`Alignment Quality Index`, plotErrorB
          main="Alignment Quality Index", xlim = c(0.045,0.11), grid=seq(0.04, 0.11, length.out=10))
 
 ```
+
+```{r, fig.height=8, fig.width=10, dev='svg'}
+
+qresplot(vcrtest.noise$PAC,testdata$mean.noise.deviation, plotErrorBars = TRUE, 
+         main="Years smoked")
+
+par(mfrow=c(1,3))
+qresplot(vcrtest.noise$PAC[testdata$y=="LUAD"],
+         testdata$mean.noise.deviation[testdata$y=="LUAD"], plotErrorBars = TRUE, 
+         main="Years smoked")
+qresplot(vcrtest.noise$PAC[testdata$y=="LUSC"],
+         testdata$mean.noise.deviation[testdata$y=="LUSC"], plotErrorBars = TRUE, 
+         main="Years smoked")
+qresplot(vcrtest.noise$PAC[testdata$y=="NORM"],
+         testdata$mean.noise.deviation[testdata$y=="NORM"], plotErrorBars = TRUE, 
+         main="Years smoked")
+
+
+```
+
+
 
 ### Classmaps and MDS color-scaled plots
 
